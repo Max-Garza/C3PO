@@ -4,6 +4,7 @@ from shared.schema import camel_to_snake
 from shared.entities import *
 from difflib import SequenceMatcher
 import re
+import streamlit as st
 
 def norm_text(text: str) -> str:
     return text.lower().strip()
@@ -340,3 +341,120 @@ def add_product(
     checks.append(check_entry_similarity(conn, row, "name", name))
 
     return safe_insert(conn, table_name, row, checks, override)
+
+def column_as_list(conn: sqlite3.Connection, table: str, column: str) -> list:
+    query = f"SELECT DISTINCT {column} FROM {table}"
+    cursor = conn.execute(query)
+    values = [row[0] for row in cursor.fetchall()]
+    return sorted(values)
+
+@st.dialog("Create New Entity")
+def create_entity_modal(conn: sqlite3.Connection) -> None:
+    entity_type = st.selectbox(
+        "What would you like to create?",
+        ["Portfolio", "Product", "Project", "Ticket", "User", "Team", "Request Type", "Completion Status", "Seniority Level", "Time Duration Unit"]
+    )
+
+    st.divider()
+
+    if "override_active" not in st.session_state:
+        st.session_state.override_active = False
+
+    with st.form("entity_form", clear_on_submit=False):
+        if entity_type == "Portfolio":
+            name = st.text_input("Portfolio Name")
+            description = st.text_area("Description")
+        
+        elif entity_type == "Product":
+            name = st.text_input("Product Name")
+            description = st.text_area("Description")
+            portfolio_name = st.selectbox("Portfolio", column_as_list(conn, "portfolio", "name"))
+            manager_name = st.selectbox("Manager", column_as_list(conn, "user", "name"))
+        
+        elif entity_type == "Project":
+            name = st.text_input("Project Name")
+            description = st.text_area("Description")
+            product_name = st.selectbox("Associated Product", column_as_list(conn, "product", "name"))
+        
+        elif entity_type == "Ticket":
+            name = st.text_input("Ticket Name")
+            request_type_name = st.selectbox("Request Type", column_as_list(conn, "request_type", "name"))
+            description = st.text_area("Description")
+            requester_name = st.selectbox("Requester Name", column_as_list(conn, "user", "name"))
+            assignee_name = st.selectbox("Assignee Name", column_as_list(conn, "user", "name"))
+            due_date = st.date_input("Due Date", value=None)
+            project_name = st.selectbox("Associated Project", column_as_list(conn, "project", "name"))
+        
+        elif entity_type == "User":
+            name = st.text_input("User Name")
+            team_name = st.selectbox("Team Name", column_as_list(conn, "team", "name"))
+            management_level_name = st.selectbox("Seniority Level", column_as_list(conn, "management_level", "name"))
+        
+        elif entity_type == "Team":
+            name = st.text_input("Team Name")
+            description = st.text_area("Description")
+        
+        elif entity_type == "resuest Type":
+            name = st.text_input("resuest Type Name")
+        
+        elif entity_type == "Completion Status":
+            name = st.text_input("Completion Status Name")
+
+        elif entity_type == "Seniority Level":
+            name = st.text_input("Seniority Level Name")
+            seniority_score = st.selectbox("Seniority Score (5 = most senior)", [1,2,3,4,5])
+        
+        elif entity_type == "Time Duration Units":
+            name = st.text_input("Time Duration Unit Name")
+        
+        else:
+            raise ValueError("Invalid entity type. Check code")
+        
+        if entity_type == "Portfolio":
+            res = add_portfolio(conn, name, description)
+        
+        elif entity_type == "Product":
+            res = add_product(conn, portfolio_name, manager_name, name, description)
+        
+        elif entity_type == "Project":
+            res = add_project(conn, product_name, manager_name, name, description)
+        
+        elif entity_type == "Ticket":
+            res = add_ticket(conn, requester_name, project_name, assignee_name, request_type_name, name, description, due_date)
+        
+        elif entity_type == "User":
+            res = add_user(conn, name, management_level_name, team_name)
+        
+        elif entity_type == "Team":
+            res = add_team(conn, name, description)
+        
+        elif entity_type == "resuest Type":
+            res = add_request_type(conn, name)
+        
+        elif entity_type == "Completion Status":
+            res = add_status(conn, name)
+
+        elif entity_type == "Seniority Level":
+            res = add_management_level(conn, name, seniority_score)
+        
+        elif entity_type == "Time Duration Units":
+            res = add_duration_unit(conn, name)
+        
+        submitted = st.form_submit_button("Submit")
+
+        if submitted:
+            try:
+                if any("BLOCKED" in msg for msg in res):
+                    for msg in res: st.warning(msg)
+                    st.session_state.override_active = False
+                
+                elif any("WARNING" in msg for msg in res):
+                    for msg in res: st.warning(msg)
+                    st.session_state.override_active = True
+                
+                elif "SUCCESS" in res:
+                    st.success(f"{entity_type} created successfully")
+                    st.session_state.override_active = False
+                    st.rerun()
+            except Exception as e:
+                st.errot(f"An error occurred: {e}")

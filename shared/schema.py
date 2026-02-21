@@ -5,7 +5,7 @@ from dataclasses import fields, is_dataclass
 from datetime import date
 
 def database_conn() -> sqlite3.Connection:
-    return sqlite3.connect("c3po.db")
+    return sqlite3.connect("c3po.db", check_same_thread=False)
 
 def create_table(conn: sqlite3.Connection, table_name: str) -> None:
     query = f"CREATE TABLE IF NOT EXISTS {table_name} (id INTEGER PRIMARY KEY AUTOINCREMENT);"

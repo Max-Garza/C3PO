@@ -1,79 +1,205 @@
 from shared.schema import create_db_pipeline
 from shared.sample import sample_entities
+from features.f01_entity_creation.func import create_entity_modal
 import streamlit as st
 import pandas as pd
 
 conn = create_db_pipeline()
 sample_entities(conn)
 
-st.set_page_config(page_title="C3PO - Entity Viewer", layout="wide")
+st.set_page_config(layout="wide", page_title="C3PO")
 
-def get_data(conn, query) -> pd.DataFrame:
-    return pd.read_sql_query(query, conn)
+if "view" not in st.session_state:
+    st.session_state.view = "Dashboard"
+if "selected_entity" not in st.session_state:
+    st.session_state.selected_entity = None
 
-st.title("C3PO")
-st.write("Sample portfolios, products, projects, and tickets")
+with st.sidebar:
+    st.title("C3PO")
+    st.divider()
 
-tab1, tab2, tab3, tab4 = st.tabs(["Portfolios", "Products", "Projects", "Tickets"])
+    nav = st.radio(
+        "Navigation",
+        [
+            "Portfolios",
+            "Products",
+            "Projects",
+            "Tickets",
+            "Users",
+            "Admin"
+        ]
+    )
 
-with tab1:
-    st.header("Strategic Portfolios")
-    df_portfolios = get_data(conn, "SELECT name, description FROM portfolio")
-    st.dataframe(df_portfolios, use_container_width=True)
+    st.divider()
 
-with tab2:
-    st.header("Product Suite")
-    query = """
-        SELECT
-            portfolio.name AS portfolio
-            ,product.name
-            ,product.description
-        FROM product
-        JOIN portfolio
-            ON product.portfolio_id = portfolio.id
-    """
-    df_products = get_data(conn, query)
-    st.dataframe(df_products, use_container_width=True)
+    if st.button("Create New Entity", use_container_width=True):
+        create_entity_modal(conn)
 
-with tab3:
-    st.header("Active Projects")
-    query = """
-        SELECT
-            product.name AS product
-            ,user.name AS manager
-            ,project.name
-            ,project.description
-        FROM project
-        JOIN product
-            ON project.product_id = product.id
-        JOIN user 
-            ON project.manager_id = user.id
-    """
-    df_projects = get_data(conn, query)
-    st.dataframe(df_projects, use_container_width=True)
+if nav == "Portfolios":
 
-with tab4:
-    st.header("Support and Task Tickets")
-    query = """
-        SELECT
-            ticket.name AS ticket_title
-            ,request_type.name AS request_type
-            ,requester.name AS requester
-            ,assignee.name AS assignee
-            ,project.name AS project
-            ,status.name AS status
-            ,ticket.due_date
-        FROM ticket
-        LEFT JOIN user requester
-            ON ticket.requester_id = requester.id
-        LEFT JOIN user assignee
-            ON ticket.assignee_id = assignee.id
-        LEFT JOIN project
-            ON ticket.project_id = project.id
-        LEFT JOIN request_type
-            ON ticket.request_type_id = request_type.id
-        LEFT JOIN status
-            ON ticket.status_id = status.id
-    """
-    df_tickets = get_data(conn, query)
-    st.dataframe(df_tickets, use_container_width=True)
+    tab1, tab2 = st.tabs(["Overview", "Product Health"])
+
+    with tab1:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+    
+    with tab2:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+
+if nav == "Products":
+
+    tab1, tab2 = st.tabs(["Overview", "Project Health"])
+
+    with tab1:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+    
+    with tab2:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+
+if nav == "Projects":
+
+    tab1, tab2, tab3 = st.tabs(["Overview", "Timeline", "Ticket Health"])
+
+    with tab1:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+    
+    with tab2:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+
+    with tab3:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+
+if nav == "Tickets":
+    
+    tab1, tab2 = st.tabs(["Overview", "Individual Tickets"])
+
+    with tab1:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+    
+    with tab2:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+
+if nav == "Users":
+
+    tab1, tab2 = st.tabs(["Overview", "Single-User"])
+
+    with tab1:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+    
+    with tab2:
+        st.header("useful header")
+
+        col1, col2 = st.columns(2)
+        col1.metric("metric1", "x")
+        col2.metric("metric2", "x")
+
+        st.subheader("plot1")
+        st.info("Plotly Chart will render here.") # Replace with plotly visual in future
+
+def admin_pull(conn, table):
+    query = f"SELECT * FROM {table}"
+    df = pd.read_sql_query(query, conn)
+    st.dataframe(df, use_container_width=True)
+
+if nav == "Admin":
+
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs(["Portfolio", "Product", "Project", "Ticket", "User", "Team", "Request Type", "Completion Status", "Seniority Level", "Time Duration Unit"])
+
+    with tab1:
+        admin_pull(conn, "portfolio")
+
+    with tab2:
+        admin_pull(conn, "product")
+    
+    with tab3:
+        admin_pull(conn, "project")
+    
+    with tab4:
+        admin_pull(conn, "ticket")
+    
+    with tab5:
+        admin_pull(conn, "user")
+    
+    with tab6:
+        admin_pull(conn, "team")
+    
+    with tab7:
+        admin_pull(conn, "request_type")
+    
+    with tab8:
+        admin_pull(conn, "status")
+    
+    with tab9:
+        admin_pull(conn, "management_level")
+    
+    with tab10:
+        admin_pull(conn, "duration_units")
