@@ -5,7 +5,13 @@ import streamlit as st
 import pandas as pd
 
 conn = create_db_pipeline()
-sample_entities(conn)
+
+counts = []
+for i in ["user", "ticket"]:
+    counts.append(conn.execute(f"SELECT COUNT(*) FROM {i}").fetchone()[0])
+
+if max(counts) == 0:
+    sample_entities(conn)
 
 st.set_page_config(layout="wide", page_title="C3PO")
 
