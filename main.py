@@ -1,6 +1,7 @@
 from shared.schema import create_db_pipeline
 from shared.sample import sample_entities
 from features.f01_entity_creation.func import create_entity_modal
+from features.f02_entity_edits.func import edit_entity_modal
 import streamlit as st
 import pandas as pd
 
@@ -40,6 +41,9 @@ with st.sidebar:
 
     if st.button("Create New Entity", use_container_width=True):
         create_entity_modal(conn)
+    
+    if st.button("Edit Existing Entity", use_container_width=True):
+        edit_entity_modal(conn)
 
 if nav == "Portfolios":
 
